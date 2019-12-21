@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/Sajad/Documents/ClionProjects/Player/MIDI_header.h
+stdbool.h
+-
+
+/Users/Sajad/Documents/ClionProjects/Player/beep.h
+
+/Users/Sajad/Documents/ClionProjects/Player/main.c
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+dlfcn.h
+-
+beep.h
+/Users/Sajad/Documents/ClionProjects/Player/beep.h
+MIDI_header.h
+/Users/Sajad/Documents/ClionProjects/Player/MIDI_header.h
+
