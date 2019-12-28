@@ -1,0 +1,2 @@
+gcc main.c beep.o libsoundio.2.0.0.dylib -lm
+./a.out
