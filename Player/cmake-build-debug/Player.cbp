@@ -78,6 +78,9 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/Users/Sajad/Documents/ClionProjects/Player/event_parser.h">
+			<Option target="Player"/>
+		</Unit>
 		<Unit filename="/Users/Sajad/Documents/ClionProjects/Player/main.c">
 			<Option target="Player"/>
 		</Unit>

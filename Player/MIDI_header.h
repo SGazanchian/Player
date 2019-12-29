@@ -10,6 +10,7 @@
 #define EXTERN_C_END
 #endif
 
+static int SIZE_OF_EVENTS = 1;
 EXTERN_C
 
 float C0  = 16.35;
@@ -120,9 +121,7 @@ float Gs8 =  6644.88;
 float A8  = 7040.00;
 float As8 =  7458.62;
 float B8  = 7902.13;
-
 EXTERN_C_END
-
 float getVal(char * name){
 
 
@@ -204,6 +203,7 @@ typedef struct
 {
     int ID;
     int size;
+    Event *events;
 
 } Track; // TODO fill track struct later
 
