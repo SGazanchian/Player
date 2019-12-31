@@ -203,6 +203,7 @@ typedef struct
 {
     int ID;
     int size;
+    Event *events;
 
 } Track; // TODO fill track struct later
 

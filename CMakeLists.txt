@@ -3,4 +3,4 @@ project(Player C)
 
 set(CMAKE_C_STANDARD 11)
 file(GLOB libsoundio.2.dylib)
-add_executable(Player main.c)
+add_executable(Player main.c event_parser.h)

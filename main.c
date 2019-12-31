@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
-#include "beep.h"
+#include <inttypes.h>
+#include "../../../Downloads/Player-master/beep.h"
 #include "MIDI_header.h"
 
 int readDeltaTime(FILE * file , Track * track , Event * event);
-int readEvent(FILE * file ,  Track * track , Event * event);
-int readTrackChunck(FILE *file, Track *tracks, Event *event);
+int readEvent(FILE * file ,  Track * track);
+int readTrackChunck(FILE *file, Track *tracks);
 void readHeader(FILE * file , HeaderChunk *headerChunk);
 int Endian_Status = 0;
 enum read_status{
@@ -28,7 +29,7 @@ int Read_Bytes(int id , int length , FILE * file , HeaderChunk *headerChunk);
 int main() {
     find_Endian_ness();
     //playfromTxt("/Users/sadra/CLionProjects/project/NOTES.txt");
-    playfromMidi("/Users/sadra/CLionProjects/project/stiilDre.mid");
+    playfromMidi("/Users/Sajad/Documents/ClionProjects/Player/stiilDre.mid");
     return 0;
 }
 void playfromMidi(char * path){
@@ -37,18 +38,10 @@ void playfromMidi(char * path){
     HeaderChunk headerChunk;
     readHeader(file,&headerChunk);
     Track tracks[headerChunk.tracks];
-    Event *events = (Event *)malloc(sizeof(Event) * SIZE_OF_EVENTS); // malloc one size of array to events
-    int filePointer = 0;
-    readTrackChunck(file, &tracks[0] , events);
-    /*for (int i = 0; i < headerChunk.tracks; ++i) {
-        readTrackChunck(file, &tracks[i] , events);
-        printf("MOVE %d FORWARD\n" , tracks[i].size);
-        filePointer += tracks[i].size;
-        fseek(file,tracks[i].size , SEEK_CUR);
-        filePointer += 8; // 4 for header 4 for size
+    for (int i = 0; i < headerChunk.tracks; ++i) {
+        readTrackChunck(file, &tracks[i]);
     }
     printf("File pointer is %d \n" , filePointer);
-    fseek(file , -filePointer , SEEK_CUR);//TODO delete that for read track at once*/
     fclose(file);
 
 }
@@ -211,7 +204,7 @@ void readHeader(FILE * file , HeaderChunk * headerChunk){
 
 
 }
-int readTrackChunck(FILE *file, Track *tracks, Event *event){
+int readTrackChunck(FILE *file, Track *tracks){
     char buffer[5] = {0};
     fread(buffer, 4, 1, file);
     if (strcmp((buffer), "MTrk") == 0){
@@ -221,7 +214,7 @@ int readTrackChunck(FILE *file, Track *tracks, Event *event){
         sizeOfTrackes = changeEndian(sizeOfTrackes);
         printf("FOUND track WITH size OF %d\n" , sizeOfTrackes );
         tracks->size = sizeOfTrackes;
-        readEvent(file , tracks,event);
+        readEvent(file , tracks);
         return 1;
     } else{
 
@@ -230,27 +223,36 @@ int readTrackChunck(FILE *file, Track *tracks, Event *event){
     }
     return 0;
 }
-int readEvent(FILE * file , Track * track , Event * event){//TODO fix readEvent
-    Event currEvent;
-    currEvent.deltaTime = readDeltaTime(file, track , event);
 
+
+
+int readEvent(FILE * file , Track * track){//TODO fix readEvent
+    static int counter = 0;
+    Event currEvent;
+    currEvent.deltaTime = readDeltaTime(file, track , track->events);
+
+    track->events[counter++] = currEvent;
+    track->events = (Event *)realloc(track->events,++SIZE_OF_EVENTS);
 
 
 }
+
+
+
 
 int readDeltaTime(FILE * file , Track * track , Event * event){
     int counter = 1;
     unsigned char deltaTime[4];
     deltaTime[0] = fgetc(file);
-    while (deltaTime[counter - 1] > 0x80 && counter < 5){
+    while (deltaTime[counter - 1] >= 0x80 && counter < 5){
         deltaTime[counter++] = fgetc(file);
     }
 
    switch (counter) {
        case 1:
-           printf("%d" , deltaTime[0]);
-           break;
-       case 2: {
+           printf("delta time is %d\n" , deltaTime[0]);
+           return (int)deltaTime[0];
+       case 2:{
             int delta = 0;
            if(Endian_Status == Little) {
                delta = deltaTime[1] | deltaTime[0] << 8;
@@ -259,23 +261,34 @@ int readDeltaTime(FILE * file , Track * track , Event * event){
                delta = deltaTime[0] | deltaTime[1] << 8;
            }
 
-           printf("%d" , delta);
-
-           break;
+           printf("delta time is %d\n" , delta);
+           return delta;
        }
 
        case 3: {
-           int result = (((unsigned int) deltaTime[0]) << 16) | (((unsigned int) deltaTime[1]) << 8) |
-                        ((unsigned int) deltaTime[2]);
+           unsigned int result;
+           if(Endian_Status == Little) {
+               result = (((unsigned int) deltaTime[0]) << 16) | (((unsigned int) deltaTime[1]) << 8) |
+                            ((unsigned int) deltaTime[2]);
+           } else{
+               result = (((unsigned int) deltaTime[2]) << 16) | (((unsigned int) deltaTime[1]) << 8) |
+                        ((unsigned int) deltaTime[1]);
 
-           printf("%d" , result);
+           }
+           printf("delta time is %d\n" , result);
+           return result;
        }
 
-       //case 4:
-
-
-
-   }
-
+       case 4:{
+            fseek(file , -4 , SEEK_CUR);
+            int delta_Time;
+            fread(&delta_Time, 4 , 1 , file);
+            delta_Time = changeEndian(delta_Time);
+           printf("delta time is %d\n" , delta_Time);
+           return delta_Time;
+       }
     }
+
+    return 0;
+
 }
