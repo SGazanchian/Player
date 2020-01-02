@@ -3,10 +3,11 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <inttypes.h>
-#include "../../../Downloads/Player-master/beep.h"
+#include "beep.h"
 #include "MIDI_header.h"
+#include "event_parser.h"
 
-int readDeltaTime(FILE * file , Track * track , Event * event);
+int readDeltaTime(FILE * file , Track * track , Event * event , int * numberOfByteToOutPut);
 int readEvent(FILE * file ,  Track * track);
 int readTrackChunck(FILE *file, Track *tracks);
 void readHeader(FILE * file , HeaderChunk *headerChunk);
@@ -38,10 +39,12 @@ void playfromMidi(char * path){
     HeaderChunk headerChunk;
     readHeader(file,&headerChunk);
     Track tracks[headerChunk.tracks];
+    readTrackChunck(file, &tracks[0]);
+    readTrackChunck(file, &tracks[1]);
     for (int i = 0; i < headerChunk.tracks; ++i) {
-        readTrackChunck(file, &tracks[i]);
+        //readTrackChunck(file, &tracks[i]);
     }
-    printf("File pointer is %d \n" , filePointer);
+
     fclose(file);
 
 }
@@ -217,7 +220,6 @@ int readTrackChunck(FILE *file, Track *tracks){
         readEvent(file , tracks);
         return 1;
     } else{
-
         puts("INVALID TRACK");
         exit(10);
     }
@@ -227,20 +229,29 @@ int readTrackChunck(FILE *file, Track *tracks){
 
 
 int readEvent(FILE * file , Track * track){//TODO fix readEvent
-    static int counter = 0;
-    Event currEvent;
-    currEvent.deltaTime = readDeltaTime(file, track , track->events);
+    int stat = 0;
+    printf("looking in track with size of %d\n" , track->size);
+    while(stat != -1){
 
-    track->events[counter++] = currEvent;
-    track->events = (Event *)realloc(track->events,++SIZE_OF_EVENTS);
+        Event currEvent;
+        int deltatimeSize = 0;
+        currEvent.deltaTime = readDeltaTime(file, track , track->events , &deltatimeSize);
+        unsigned char events;
+        fread(&events , 1,1,file);
+        printf("find event of %x\n",events);
+        stat = findEventKind(events,file,track,&currEvent);
+        //track->events[SIZE_OF_EVENTS - 1] = currEvent;
+        //track->events = (Event *)realloc(track->events,++SIZE_OF_EVENTS);
 
-
+    }
+    puts("Found End of Track");
+    fseek(file,1,SEEK_CUR);
 }
 
 
 
 
-int readDeltaTime(FILE * file , Track * track , Event * event){
+int readDeltaTime(FILE * file , Track * track , Event * event , int * numberOfByteToOutPut){
     int counter = 1;
     unsigned char deltaTime[4];
     deltaTime[0] = fgetc(file);
@@ -251,22 +262,25 @@ int readDeltaTime(FILE * file , Track * track , Event * event){
    switch (counter) {
        case 1:
            printf("delta time is %d\n" , deltaTime[0]);
+           *numberOfByteToOutPut = 1;
            return (int)deltaTime[0];
        case 2:{
             int delta = 0;
+
            if(Endian_Status == Little) {
                delta = deltaTime[1] | deltaTime[0] << 8;
            } else{
 
                delta = deltaTime[0] | deltaTime[1] << 8;
            }
-
+           *numberOfByteToOutPut = 2;
            printf("delta time is %d\n" , delta);
            return delta;
        }
 
        case 3: {
            unsigned int result;
+
            if(Endian_Status == Little) {
                result = (((unsigned int) deltaTime[0]) << 16) | (((unsigned int) deltaTime[1]) << 8) |
                             ((unsigned int) deltaTime[2]);
@@ -275,6 +289,7 @@ int readDeltaTime(FILE * file , Track * track , Event * event){
                         ((unsigned int) deltaTime[1]);
 
            }
+           *numberOfByteToOutPut = 3;
            printf("delta time is %d\n" , result);
            return result;
        }
@@ -285,9 +300,11 @@ int readDeltaTime(FILE * file , Track * track , Event * event){
             fread(&delta_Time, 4 , 1 , file);
             delta_Time = changeEndian(delta_Time);
            printf("delta time is %d\n" , delta_Time);
+           *numberOfByteToOutPut = 4;
            return delta_Time;
        }
     }
+
 
     return 0;
 
