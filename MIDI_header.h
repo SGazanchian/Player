@@ -123,15 +123,8 @@ float As8 =  7458.62;
 float B8  = 7902.13;
 EXTERN_C_END
 float getVal(char * name){
-
-
     float* p;
     p = (float*)dlsym(RTLD_SELF, name);
-    if (( p != NULL)) {
-
-        //printf("my_variable @ %d", *p);
-    }
-
     return *(p);
 
 }
@@ -178,27 +171,13 @@ typedef enum
 
 typedef struct
 {
+    int TEMPO;
     int deltaTime;
     int event;
     int note;
     int velocity;
+    float freq;
 } Event;
-
-typedef struct
-{
-/*complete*/
-} MidiTimeSignature;
-
-typedef struct
-{
-/*complete*/
-} MidiNote;
-
-typedef struct Note
-{
-/*complete*/
-} Note;
-
 typedef struct
 {
     int ID;
@@ -206,14 +185,5 @@ typedef struct
     Event *events;
 
 } Track; // TODO fill track struct later
-
-
-typedef struct
-{
-/*complete*/
-} MidiTrack;
- /*your type*/ //print_midi_header(/*complete*/);
-  /*your type*/ //print_midi_track(/*complete*/);
-  /*your type*/ //midi_player(/*complete*/);
 
 #endif
