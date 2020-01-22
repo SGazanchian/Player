@@ -12,6 +12,24 @@ stdbool.h
 
 /Users/Sajad/Documents/ClionProjects/Player/beep.h
 
+/Users/Sajad/Documents/ClionProjects/Player/buzzer.h
+portaudio/portaudio.h
+/Users/Sajad/Documents/ClionProjects/Player/portaudio/portaudio.h
+stdio.h
+-
+math.h
+-
+stdint.h
+-
+unistd.h
+-
+
+/Users/Sajad/Documents/ClionProjects/Player/event_parser.h
+stdio.h
+-
+stdlib.h
+-
+
 /Users/Sajad/Documents/ClionProjects/Player/main.c
 stdio.h
 -
@@ -21,8 +39,16 @@ string.h
 -
 dlfcn.h
 -
+inttypes.h
+-
 beep.h
 /Users/Sajad/Documents/ClionProjects/Player/beep.h
 MIDI_header.h
 /Users/Sajad/Documents/ClionProjects/Player/MIDI_header.h
+event_parser.h
+/Users/Sajad/Documents/ClionProjects/Player/event_parser.h
+buzzer.h
+/Users/Sajad/Documents/ClionProjects/Player/buzzer.h
+
+/Users/Sajad/Documents/ClionProjects/Player/portaudio/portaudio.h
 

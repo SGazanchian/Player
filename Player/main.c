@@ -3,12 +3,16 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <inttypes.h>
-#include "../../../Downloads/Player-master/beep.h"
-#include "MIDI_header.h"
+#include "beep.h"
+#include "headers/MIDI_header.h"
+#include "headers/event_parser.h"
+#include "headers/buzzer.h"
 
-int readDeltaTime(FILE * file , Track * track , Event * event);
-int readEvent(FILE * file ,  Track * track);
-int readTrackChunck(FILE *file, Track *tracks);
+unsigned long ReadDeltaTime(FILE * file);
+void readDATA(FILE * NT , int division);
+int readDeltaTime(FILE * file , Track * track , Event * event , int * numberOfByteToOutPut);
+void readEvent(FILE * file ,  Track * track , FILE * NT);
+int readTrackChunck(FILE *file, Track *tracks , FILE * NT);
 void readHeader(FILE * file , HeaderChunk *headerChunk);
 int Endian_Status = 0;
 enum read_status{
@@ -27,9 +31,11 @@ void playfromTxt(char *path); // phase 1 of project
 void playfromMidi(char * path);
 int Read_Bytes(int id , int length , FILE * file , HeaderChunk *headerChunk);
 int main() {
+    buzzer_start();
     find_Endian_ness();
     //playfromTxt("/Users/sadra/CLionProjects/project/NOTES.txt");
-    playfromMidi("/Users/Sajad/Documents/ClionProjects/Player/stiilDre.mid");
+    playfromMidi("/Users/Sajad/Documents/ClionProjects/Player/Lacrimosa by Mozart.mid");
+    buzzer_stop();
     return 0;
 }
 void playfromMidi(char * path){
@@ -38,10 +44,16 @@ void playfromMidi(char * path){
     HeaderChunk headerChunk;
     readHeader(file,&headerChunk);
     Track tracks[headerChunk.tracks];
+    FILE *NT = fopen("NT.txt" , "w");
     for (int i = 0; i < headerChunk.tracks; ++i) {
-        readTrackChunck(file, &tracks[i]);
+        readTrackChunck(file, &tracks[i],NT);
     }
-    printf("File pointer is %d \n" , filePointer);
+    readDATA(NT, headerChunk.division);
+    for (int i = 0; i < headerChunk.tracks; ++i) {
+        free(tracks[i].events);
+    }
+
+    fclose(NT);
     fclose(file);
 
 }
@@ -204,7 +216,7 @@ void readHeader(FILE * file , HeaderChunk * headerChunk){
 
 
 }
-int readTrackChunck(FILE *file, Track *tracks){
+int readTrackChunck(FILE *file, Track *tracks , FILE * NT){
     char buffer[5] = {0};
     fread(buffer, 4, 1, file);
     if (strcmp((buffer), "MTrk") == 0){
@@ -214,10 +226,9 @@ int readTrackChunck(FILE *file, Track *tracks){
         sizeOfTrackes = changeEndian(sizeOfTrackes);
         printf("FOUND track WITH size OF %d\n" , sizeOfTrackes );
         tracks->size = sizeOfTrackes;
-        readEvent(file , tracks);
+        readEvent(file , tracks , NT);
         return 1;
     } else{
-
         puts("INVALID TRACK");
         exit(10);
     }
@@ -226,21 +237,27 @@ int readTrackChunck(FILE *file, Track *tracks){
 
 
 
-int readEvent(FILE * file , Track * track){//TODO fix readEvent
-    static int counter = 0;
-    Event currEvent;
-    currEvent.deltaTime = readDeltaTime(file, track , track->events);
-
-    track->events[counter++] = currEvent;
-    track->events = (Event *)realloc(track->events,++SIZE_OF_EVENTS);
-
-
+void readEvent(FILE * file , Track * track , FILE * NT){//TODO fix readEvent
+    int stat = 0;
+    track->events = malloc(sizeof(Event) * 2);
+    printf("looking in track with size of %d\n" , track->size);
+    while(stat != -1){
+        Event currEvent;
+        int deltatimeSize = 0;
+        currEvent.deltaTime = ReadDeltaTime(file);
+        unsigned char events;
+        fread(&events , 1,1,file);
+        printf("find event of %x\n",events);
+        stat = findEventKind(events,file,track,&currEvent , NT);
+    }
+    puts("Found End of Track");
+    fseek(file,1,SEEK_CUR);
 }
 
 
 
 
-int readDeltaTime(FILE * file , Track * track , Event * event){
+int readDeltaTime(FILE * file , Track * track , Event * event , int * numberOfByteToOutPut){
     int counter = 1;
     unsigned char deltaTime[4];
     deltaTime[0] = fgetc(file);
@@ -251,30 +268,31 @@ int readDeltaTime(FILE * file , Track * track , Event * event){
    switch (counter) {
        case 1:
            printf("delta time is %d\n" , deltaTime[0]);
+           *numberOfByteToOutPut = 1;
            return (int)deltaTime[0];
        case 2:{
             int delta = 0;
+
            if(Endian_Status == Little) {
                delta = deltaTime[1] | deltaTime[0] << 8;
            } else{
 
                delta = deltaTime[0] | deltaTime[1] << 8;
            }
-
+           *numberOfByteToOutPut = 2;
            printf("delta time is %d\n" , delta);
            return delta;
        }
 
        case 3: {
            unsigned int result;
-           if(Endian_Status == Little) {
-               result = (((unsigned int) deltaTime[0]) << 16) | (((unsigned int) deltaTime[1]) << 8) |
-                            ((unsigned int) deltaTime[2]);
-           } else{
-               result = (((unsigned int) deltaTime[2]) << 16) | (((unsigned int) deltaTime[1]) << 8) |
-                        ((unsigned int) deltaTime[1]);
 
+           if(Endian_Status == Little) {
+               result =  deltaTime[0] << 16 | deltaTime[1] << 8 | deltaTime[2];
+           } else{
+               result =  deltaTime[2] << 16 | deltaTime[1] << 8 | deltaTime[0];
            }
+           *numberOfByteToOutPut = 3;
            printf("delta time is %d\n" , result);
            return result;
        }
@@ -285,10 +303,61 @@ int readDeltaTime(FILE * file , Track * track , Event * event){
             fread(&delta_Time, 4 , 1 , file);
             delta_Time = changeEndian(delta_Time);
            printf("delta time is %d\n" , delta_Time);
+           *numberOfByteToOutPut = 4;
            return delta_Time;
        }
     }
 
+
     return 0;
+
+}
+
+unsigned long ReadDeltaTime(FILE * file) {
+    register unsigned long value;
+    register unsigned char c;
+
+    if ((value = fgetc(file)) & 0x80) {
+        value &= 0x7F;
+        do {
+            value = (value << 7) + ((c = getc(file)) & 0x7F);
+        } while (c & 0x80);
+    }
+
+    return (value);
+}
+void readDATA(FILE * NT ,  int division){
+    int stat = 0;
+    fseek(NT,1,SEEK_SET);
+    fclose(NT);
+    FILE * N = fopen("NT.txt" , "r");
+    while (stat != EOF)
+    {
+        double freq;
+        double duration;
+        int tempo;
+        int deltaTime;
+        stat = fscanf(N , "%lf%d%d" , &freq , &tempo , &deltaTime);
+        printf("found %f %d %d\n" ,  freq , tempo , deltaTime);
+        duration = (60*1000000) / tempo;
+
+        duration *= division;
+
+        double MSPT = 60000 / duration;
+
+        MSPT *= deltaTime;
+
+       /* if(MSPT < 400){
+
+            MSPT += 200;
+
+        }*/
+        printf("DURATION IS %d\n" , (int)MSPT);
+        //beep(freq,(int)MSPT);
+        buzzer_set_freq((int)freq + 20);
+        msleep((int)MSPT);
+
+    }
+
 
 }

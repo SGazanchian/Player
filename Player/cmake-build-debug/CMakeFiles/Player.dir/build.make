@@ -79,6 +79,10 @@ Player_EXTERNAL_OBJECTS =
 
 Player: CMakeFiles/Player.dir/main.c.o
 Player: CMakeFiles/Player.dir/build.make
+Player: ../libportaudio.dylib
+Player: ../libportaudio_static.a
+Player: ../libsoundio.2.0.0.dylib
+Player: ../beep.o
 Player: CMakeFiles/Player.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/Sajad/Documents/ClionProjects/Player/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking C executable Player"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Player.dir/link.txt --verbose=$(VERBOSE)

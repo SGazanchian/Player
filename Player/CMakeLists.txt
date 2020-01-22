@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(Player C)
-
+set_directory_properties(/Users/Sajad/Documents/ClionProjects/Player)
 set(CMAKE_C_STANDARD 11)
-file(GLOB libsoundio.2.dylib)
-add_executable(Player main.c event_parser.h)
+file(GLOB lib/libsoundio.2.dylib)
+add_executable(Player main.c headers/event_parser.h headers/getNote.h headers/buzzer.h)
+target_link_libraries(Player /Users/Sajad/Documents/ClionProjects/Player/libportaudio.dylib /Users/Sajad/Documents/ClionProjects/Player/libportaudio_static.a /Users/Sajad/Documents/ClionProjects/Player/libsoundio.2.0.0.dylib /Users/Sajad/Documents/ClionProjects/Player/beep.o)
