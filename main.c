@@ -34,7 +34,7 @@ int main() {
     buzzer_start();
     find_Endian_ness();
     //playfromTxt("/Users/sadra/CLionProjects/project/NOTES.txt");
-    playfromMidi("/Users/Sajad/Documents/ClionProjects/Player/Lacrimosa by Mozart.mid");
+    playfromMidi("/Users/Sajad/Documents/ClionProjects/Player/MIDI_FILES/Lacrimosa by Mozart.mid");
     buzzer_stop();
     return 0;
 }
