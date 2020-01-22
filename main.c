@@ -8,7 +8,7 @@
 #include "event_parser.h"
 
 
-
+unsigned long ReadDeltaTime(FILE * file);
 void readDATA(FILE * NT , int division);
 int readDeltaTime(FILE * file , Track * track , Event * event , int * numberOfByteToOutPut);
 void readEvent(FILE * file ,  Track * track , FILE * NT);
@@ -32,10 +32,10 @@ void playfromMidi(char * path);
 int Read_Bytes(int id , int length , FILE * file , HeaderChunk *headerChunk);
 int main() {
 
-
+    
     find_Endian_ness();
     //playfromTxt("/Users/sadra/CLionProjects/project/NOTES.txt");
-    playfromMidi("/Users/Sajad/Documents/ClionProjects/Player/Lacrimosa by Mozart.mid");
+    playfromMidi("/Users/Sajad/Documents/ClionProjects/Player/Opus 18 No 1 by Frederic Chopin.mid");
     return 0;
 }
 void playfromMidi(char * path){
@@ -244,7 +244,7 @@ void readEvent(FILE * file , Track * track , FILE * NT){//TODO fix readEvent
     while(stat != -1){
         Event currEvent;
         int deltatimeSize = 0;
-        currEvent.deltaTime = readDeltaTime(file, track , track->events , &deltatimeSize);
+        currEvent.deltaTime = ReadDeltaTime(file);
         unsigned char events;
         fread(&events , 1,1,file);
         printf("find event of %x\n",events);
@@ -313,6 +313,19 @@ int readDeltaTime(FILE * file , Track * track , Event * event , int * numberOfBy
 
 }
 
+unsigned long ReadDeltaTime(FILE * file) {
+    register unsigned long value;
+    register unsigned char c;
+
+    if ((value = fgetc(file)) & 0x80) {
+        value &= 0x7F;
+        do {
+            value = (value << 7) + ((c = getc(file)) & 0x7F);
+        } while (c & 0x80);
+    }
+
+    return (value);
+}
 void readDATA(FILE * NT ,  int division){
     int stat = 0;
     fseek(NT,1,SEEK_SET);
@@ -328,15 +341,19 @@ void readDATA(FILE * NT ,  int division){
         printf("found %f %d %d\n" ,  freq , tempo , deltaTime);
         duration = (60*1000000) / tempo;
 
-        duration /= 100;
-        duration /= 50;
-        if(deltaTime < 10000) {
-            duration *= deltaTime*175;
-        } else{
-            duration *= deltaTime;
+        duration *= division;
+
+        double MSPT = 60000 / duration;
+
+        MSPT *= deltaTime;
+
+        if(MSPT < 400){
+
+            MSPT += 200;
+
         }
-        printf("DURATION IS %d\n" , (int)duration);
-        beep(freq,(int)duration);
+        printf("DURATION IS %d\n" , (int)MSPT);
+        beep(freq,(int)MSPT);
 
     }
 
