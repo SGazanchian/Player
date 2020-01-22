@@ -4,9 +4,9 @@
 #include <dlfcn.h>
 #include <inttypes.h>
 #include "beep.h"
-#include "MIDI_header.h"
-#include "event_parser.h"
-#include "buzzer.h"
+#include "headers/MIDI_header.h"
+#include "headers/event_parser.h"
+#include "headers/buzzer.h"
 
 unsigned long ReadDeltaTime(FILE * file);
 void readDATA(FILE * NT , int division);
