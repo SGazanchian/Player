@@ -6,7 +6,7 @@
 #include "beep.h"
 #include "MIDI_header.h"
 #include "event_parser.h"
-
+#include "buzzer.h"
 
 unsigned long ReadDeltaTime(FILE * file);
 void readDATA(FILE * NT , int division);
@@ -31,11 +31,11 @@ void playfromTxt(char *path); // phase 1 of project
 void playfromMidi(char * path);
 int Read_Bytes(int id , int length , FILE * file , HeaderChunk *headerChunk);
 int main() {
-
-    
+    buzzer_start();
     find_Endian_ness();
     //playfromTxt("/Users/sadra/CLionProjects/project/NOTES.txt");
-    playfromMidi("/Users/Sajad/Documents/ClionProjects/Player/Opus 18 No 1 by Frederic Chopin.mid");
+    playfromMidi("/Users/Sajad/Documents/ClionProjects/Player/Lacrimosa by Mozart.mid");
+    buzzer_stop();
     return 0;
 }
 void playfromMidi(char * path){
@@ -347,13 +347,15 @@ void readDATA(FILE * NT ,  int division){
 
         MSPT *= deltaTime;
 
-        if(MSPT < 400){
+       /* if(MSPT < 400){
 
             MSPT += 200;
 
-        }
+        }*/
         printf("DURATION IS %d\n" , (int)MSPT);
-        beep(freq,(int)MSPT);
+        //beep(freq,(int)MSPT);
+        buzzer_set_freq((int)freq + 20);
+        msleep((int)MSPT);
 
     }
 
