@@ -4,4 +4,7 @@
 CMakeFiles/Player.dir/main.c.o
  /Users/Sajad/Documents/ClionProjects/Player/MIDI_header.h
  /Users/Sajad/Documents/ClionProjects/Player/beep.h
+ /Users/Sajad/Documents/ClionProjects/Player/buzzer.h
+ /Users/Sajad/Documents/ClionProjects/Player/event_parser.h
  /Users/Sajad/Documents/ClionProjects/Player/main.c
+ /Users/Sajad/Documents/ClionProjects/Player/portaudio/portaudio.h
